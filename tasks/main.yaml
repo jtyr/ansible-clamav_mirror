@@ -1,0 +1,75 @@
+---
+
+- name: Create all directories if they don't exist
+  file:
+    path: "{{ item.path }}"
+    mode: "{{ item.mode | default(omit) }}"
+    owner: "{{ item.owner | default(omit) }}"
+    group: "{{ item.group | default(omit) }}"
+    state: directory
+  with_items:
+    - path:  "{{ clamav_mirror_script_bindir }}"
+      mode:  "{{ clamav_mirror_script_bindir_mode  | default(omit) }}"
+      owner: "{{ clamav_mirror_script_bindir_owner | default(omit) }}"
+      group: "{{ clamav_mirror_script_bindir_group | default(omit) }}"
+    - path:  "{{ clamav_mirror_script_workdir }}"
+      mode:  "{{ clamav_mirror_script_workdir_mode  | default(omit) }}"
+      owner: "{{ clamav_mirror_script_workdir_owner | default(omit) }}"
+      group: "{{ clamav_mirror_script_workdir_group | default(omit) }}"
+    - path:  "{{ clamav_mirror_script_mirrordir }}"
+      mode:  "{{ clamav_mirror_script_mirrordir_mode  | default(0755) }}"
+      owner: "{{ clamav_mirror_script_mirrordir_owner | default(omit) }}"
+      group: "{{ clamav_mirror_script_mirrordir_group | default(omit) }}"
+    - path:  "{{ clamav_mirror_script_lockdir }}"
+      mode:  "{{ clamav_mirror_script_lockdir_mode  | default(omit) }}"
+      owner: "{{ clamav_mirror_script_lockdir_owner | default(omit) }}"
+      group: "{{ clamav_mirror_script_lockdir_group | default(omit) }}"
+  tags:
+    - clamav_mirror_install
+    - clamav_mirror_dirs
+
+- name: Install mirroring script dependencies
+  package:
+    name: "{{ item }}"
+  with_items: "{{ clamav_mirror_script_deps }}"
+  tags:
+    - clamav_mirror_install
+    - clamav_mirror_pkg
+
+- name: Install mirroring script
+  copy:
+    src: "{{ clamav_mirror_script }}"
+    dest: "{{ clamav_mirror_script_bindir }}/{{ clamav_mirror_script }}"
+    mode: 0755
+  tags:
+    - clamav_mirror_install
+    - clamav_mirror_script
+
+- name: Setup ClamAV mirror cron job
+  cron:
+    name: ClamAV mirror
+    minute: "{{ clamav_mirror_cron_minute }}"
+    hour: "{{ clamav_mirror_cron_hour }}"
+    weekday: "{{ clamav_mirror_cron_weekday }}"
+    job: "{{ clamav_mirror_cron_job }}"
+  tags:
+    - clamav_mirror_cron
+
+- name: Check if the main.cvd exists
+  stat:
+    path: "{{ clamav_mirror_script_mirrordir }}/main.cvd"
+  register: clamav_mirror_exists_main
+  when: clamav_mirror_init
+  tags:
+    - clamav_mirror_init
+
+- name: Run mirroring script
+  shell: "{{ clamav_mirror_cron_job }}"
+  when: >
+    clamav_mirror_init and
+    clamav_mirror_exists_main is defined and
+    not clamav_mirror_exists_main.stat.exists
+  register: clamav_mirror_init_run
+  failed_when: clamav_mirror_init_run.rc not in [0, 254]
+  tags:
+    - clamav_mirror_init

@@ -1,0 +1,59 @@
+---
+
+# Mirror script dependencies:
+clamav_mirror_script_deps:
+  - clamav
+  - python-dns
+
+# File name of the mirror script
+# (taken from: https://github.com/vrtadmin/clamav-faq/mirrors/)
+clamav_mirror_script: clamavmirror.py
+
+# ClamAV DB mirror
+clamav_mirror_script_db: database.clamav.net
+
+# ClamAV TXT record server
+clamav_mirror_script_txt: current.cvd.clamav.net
+
+# All the *dir variables bellow can also be accompanied with
+# *dir_{mode,owner,group} variables which allow to configure the directory
+# owner, group and mode.
+# (e.g "clamav_mirror_script_mirrordir_owner: nginx" will set the nginx user as
+# the owner)
+
+# Directory where to store the script
+clamav_mirror_script_bindir: /usr/local/bin
+
+# Directory where to store intermediate downloads
+clamav_mirror_script_workdir: /var/spool/clamav_mirror
+
+# Directory where to store the mirrored files
+clamav_mirror_script_mirrordir: /srv/www/clamav_mirror
+
+# Directory where to store the lockfile
+clamav_mirror_script_lockdir: /var/lock/subsys
+
+# User which should own the mirrored files
+clamav_mirror_script_user: nginx
+
+# Group which should own the mirrored files
+clamav_mirror_script_group: nginx
+
+# Crontab time settings
+clamav_mirror_cron_minute: "*/30"
+clamav_mirror_cron_hour: "*"
+clamav_mirror_cron_weekday: "*"
+
+# Crontab job
+clamav_mirror_cron_job: >-
+  "{{ clamav_mirror_script_bindir }}/{{ clamav_mirror_script }}"
+  -w "{{ clamav_mirror_script_workdir }}"
+  -d "{{ clamav_mirror_script_mirrordir }}"
+  -l "{{ clamav_mirror_script_lockdir }}"
+  -r {{ clamav_mirror_script_txt }}
+  -a {{ clamav_mirror_script_db }}
+  -u {{ clamav_mirror_script_user }}
+  -g {{ clamav_mirror_script_group }}
+
+# Whether to run the mirroring script as a part of this role for the first time
+clamav_mirror_init: yes
