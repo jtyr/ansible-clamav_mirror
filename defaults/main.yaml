@@ -44,12 +44,16 @@ clamav_mirror_cron_minute: "*/30"
 clamav_mirror_cron_hour: "*"
 clamav_mirror_cron_weekday: "*"
 
+# Cron job prefix (e.g. for specifying http_proxy)
+clamav_mirror_cron_job_prefix: ""
+
 # Crontab job
 clamav_mirror_cron_job: >-
-  "{{ clamav_mirror_script_bindir }}/{{ clamav_mirror_script }}"
-  -w "{{ clamav_mirror_script_workdir }}"
-  -d "{{ clamav_mirror_script_mirrordir }}"
-  -l "{{ clamav_mirror_script_lockdir }}"
+  {{ clamav_mirror_cron_job_prefix }}
+  {{ clamav_mirror_script_bindir }}/{{ clamav_mirror_script }}
+  -w {{ clamav_mirror_script_workdir }}
+  -d {{ clamav_mirror_script_mirrordir }}
+  -l {{ clamav_mirror_script_lockdir }}
   -r {{ clamav_mirror_script_txt }}
   -a {{ clamav_mirror_script_db }}
   -u {{ clamav_mirror_script_user }}
