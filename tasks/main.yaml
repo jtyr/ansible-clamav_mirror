@@ -59,7 +59,7 @@
   stat:
     path: "{{ clamav_mirror_script_mirrordir }}/main.cvd"
   register: clamav_mirror_exists_main
-  when: clamav_mirror_init
+  when: clamav_mirror_init == true
   tags:
     - clamav_mirror_init
 
